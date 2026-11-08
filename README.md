@@ -192,8 +192,8 @@ A summary line appears above every document: *"Integrity report — 1 duplicate 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/json-studio.git
-cd json-studio
+git clone https://github.com/vinze01/JSON-Studio.git
+cd JSON-Studio
 
 # 2. Install dependencies
 npm install
@@ -310,8 +310,8 @@ All preferences are persisted via Chrome Storage and survive browser restarts.
 npm run test
 ```
 
-- **121 tests** across **14 test files** — all passing
-- Covers JSON parsing, formatting, validation, tree building, search, pointer generation, stats, and UI components
+- **187 tests** across **19 test files** - all passing
+- Covers JSON parsing, formatting, validation (incl. the error-highlight range mapper), repair/typegen, tree building, search, pointer generation, stats, page-inspection helpers, browser storage APIs, and UI components. Plus **6 Playwright E2E tests** (real Chromium).
 
 ### Type Checking
 
@@ -409,7 +409,7 @@ JSON Studio requests the minimum permissions necessary — and nothing more:
 | **Raw HTTP response bodies** | Chrome's extension APIs do not expose raw HTTP response bodies. Page inspection reads the rendered DOM (body text or `<pre>` blocks) instead. |
 | **Restricted pages** | `chrome://` URLs, the Chrome Web Store, and other privileged pages cannot be inspected by any extension. |
 | **Inline editing** | Editing JSON inline in the tree view is planned for v1.1. |
-| **E2E smoke tests pass in Chromium** | The Playwright suite loads the built extension in headless Chromium and passes (5 tests), but deeper flows (live page inspection, CodeMirror editing, file I/O) are not automated — see the manual checklist. |
+| **E2E smoke tests pass in Chromium** | The Playwright suite loads the built extension in headless Chromium and passes (6 tests), but deeper flows (live page inspection, CodeMirror editing, file I/O) are not automated — see the manual checklist. |
 | **Very large documents** | The tree viewer's 50 000-node guard prevents expanding extremely large documents all at once. Incremental expansion still works. |
 
 ---
