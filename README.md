@@ -398,7 +398,6 @@ JSON Studio requests the minimum permissions necessary — and nothing more:
 - 📄 **[PRIVACY.md](PRIVACY.md)** — full privacy policy, the reproduced source audit, and the Chrome Web Store submission checklist.
 - 🏗️ **[ARCHITECTURE.md](ARCHITECTURE.md)** — deep dive into how the extension is built and why.
 - 📋 **[CHANGELOG.md](CHANGELOG.md)** — release history.
-- 🧪 **[TESTING.md](TESTING.md)** — what is tested, how, and what is not.
 
 ---
 

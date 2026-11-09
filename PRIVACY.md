@@ -94,7 +94,7 @@ The well-known JSON Formatter (`bcjindcccaagfpapjjmafapmmgkkhgoa`, 2M users) dro
 - [x] Data cannot be sold, transferred, or used for unrelated purposes — no data access exists.
 - [x] Privacy policy: this document (host a public URL of it on the repo/homepage when publishing).
 - [x] No Restricted Keyword / misleading claims in the store listing.
-- [ ] Item compliance review: store assets, description, and screenshots (pending manual review, see TESTING.md).
+- [ ] Item compliance review: store assets, description, and screenshots (pending manual review).
 
 ---
 

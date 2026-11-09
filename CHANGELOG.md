@@ -158,6 +158,6 @@ Reference studied: [JSON Beautifier and Editor](https://chromewebstore.google.co
 - **Quality**: 121 tests passing (unit + component + performance benchmarks at 100 KB/1 MB/5 MB), ESLint clean, `vue-tsc` clean, `wxt build` producing `.output/chrome-mv3/`.
 - **Tooling**: Vitest, Playwright config (E2E stub), ESLint + Prettier, icon generation script (`scripts/generate-icons.mjs`).
 
-### Known gaps (tracked in README / TESTING.md)
+### Known gaps (tracked in README)
 - Playwright E2E suite not yet executed against a live Chromium instance (browser binary not installed during development).
 - Screenshots and store listing assets pending.

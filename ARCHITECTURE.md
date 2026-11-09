@@ -171,8 +171,6 @@ Nothing in `lib/` imports Vue or Pinia — the boundary is intentional so browse
 - **Performance (included in unit)** — 100 KB < 500 ms, 1 MB < 2000 ms, 5 MB (parse only) < 5000 ms.
 - **E2E (6, passing)** — Playwright Chromium loads the built extension; smoke + integrity + lossless-format + tree-virtualization + expand-all/format-preservation + validate-error-highlight flows verified in a real browser.
 
-Detailed coverage map: [TESTING.md](TESTING.md).
-
 ---
 
 ## 11. Code conventions
