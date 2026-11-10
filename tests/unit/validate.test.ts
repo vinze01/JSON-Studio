@@ -38,6 +38,66 @@ describe('scanJson happy paths', () => {
   });
 });
 
+describe('scanJson duplicate array elements', () => {
+  it('flags identical objects with a pointer to the first occurrence', () => {
+    const result = scanJson('[{"name":"x","id":"v1"},{"name":"y"},{"name":"x","id":"v1"},{"name":"x","id":"v1"}]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([{ pointer: '/0', occurrences: 3 }]);
+  });
+
+  it('collapses whitespace differences between duplicates', () => {
+    const result = scanJson('[{"a":1}, { "a" : 1 },\n{"a":\t1}]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([{ pointer: '/0', occurrences: 3 }]);
+  });
+
+  it('flags duplicate scalars and does not collide with lookalikes', () => {
+    // "/x" repeats but "y" must not trip on the second threshold.
+    const result = scanJson('["x","x",1,"y","y"]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([
+      { pointer: '/0', occurrences: 2 },
+      { pointer: '/3', occurrences: 2 },
+    ]);
+  });
+
+  it('does not treat whitespace inside strings as insignificant', () => {
+    const result = scanJson('["a b","ab"]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([]);
+  });
+
+  it('reports findings in nested arrays with full pointer paths', () => {
+    const result = scanJson('{"rows":[[1,2],[3,4],[1,2]]}');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([{ pointer: '/rows/0', occurrences: 2 }]);
+  });
+
+  it('reports duplicate key findings alongside element findings', () => {
+    const result = scanJson('[{"a":1,"a":2},{"a":1,"a":2}]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateKeys).toEqual([
+      { pointer: '/0/a', occurrences: 2 },
+      { pointer: '/1/a', occurrences: 2 },
+    ]);
+    expect(result.info.duplicateElements).toEqual([{ pointer: '/0', occurrences: 2 }]);
+  });
+
+  it('caps element findings at the scanner limit', () => {
+    // 22 duplicated pairs -> 22 potential findings; findings report 20 (MAX_DUPLICATE_FINDINGS).
+    const pairs = Array.from({ length: 22 }, (_, i) => `"pair${i}","pair${i}"`).join(',');
+    const result = scanJson(`[${pairs}]`);
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toHaveLength(20);
+  });
+
+  it('stays silent for arrays of unique elements', () => {
+    const result = scanJson('[{"id":"1"},{"id":"2"},[1,2],"mixed",null,true,3.5]');
+    expect(result.ok).toBe(true);
+    expect(result.info.duplicateElements).toEqual([]);
+  });
+});
+
 describe('scanJson diagnostics', () => {
   interface Case {
     name: string;

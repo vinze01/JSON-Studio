@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { AlertTriangle, Info, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-vue-next';
-import type { ScanResult, JsonDiagnostic, DuplicateKeyFinding } from '@/types';
+import { AlertTriangle, Copy, Info, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-vue-next';
+import type { ScanResult, JsonDiagnostic, DuplicateElementFinding, DuplicateKeyFinding } from '@/types';
 import { decodePointer } from '@/utils/json/pointer';
 
 interface Props {
@@ -14,9 +14,13 @@ const emit = defineEmits<{ repair: [] }>();
 function integritySummary(scan: ScanResult): string {
   const problems: string[] = [];
   const duplicateCount = scan.info.duplicateKeys.length;
+  const duplicateElementCount = scan.info.duplicateElements.length;
   const precisionCount = scan.info.precisionNotes;
   if (duplicateCount > 0) {
     problems.push(`${duplicateCount} duplicate key${duplicateCount === 1 ? '' : 's'}`);
+  }
+  if (duplicateElementCount > 0) {
+    problems.push(`${duplicateElementCount} duplicate entr${duplicateElementCount === 1 ? 'y' : 'ies'}`);
   }
   if (precisionCount > 0) {
     problems.push(`${precisionCount} precision-risk number${precisionCount === 1 ? '' : 's'}`);
@@ -31,6 +35,12 @@ function findingText(finding: DuplicateKeyFinding): string {
   const segments = decodePointer(finding.pointer);
   const label = segments.length === 0 ? 'root object' : segments.map((segment) => segment).join('/');
   return `Property "${label}" appears more than once - the last occurrence wins.`;
+}
+
+function elementFindingText(finding: DuplicateElementFinding): string {
+  const segments = decodePointer(finding.pointer);
+  const label = segments.join('/');
+  return `Element at ${label} repeats ${finding.occurrences} time${finding.occurrences === 1 ? '' : 's'} with identical content.`;
 }
 </script>
 
@@ -93,6 +103,27 @@ function findingText(finding: DuplicateKeyFinding): string {
         </ul>
         <p v-if="scan.info.duplicateKeys.length > 5" class="mt-0.5">
           and {{ scan.info.duplicateKeys.length - 5 }} more…
+        </p>
+      </div>
+    </div>
+
+    <div
+      v-if="scan.info.duplicateElements.length > 0"
+      class="flex items-start gap-2 rounded-md border border-border bg-surface-inset px-3 py-2 text-fg-muted"
+    >
+      <Copy class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+      <div class="min-w-0">
+        <p class="font-medium text-fg">Duplicate array elements</p>
+        <p class="mb-0.5 text-fg-faint">
+          Every copy is kept, unlike duplicate keys - but identical items usually mean a failed dedup, a retry loop, or double-joined data. Compare the sources before trusting the counts.
+        </p>
+        <ul class="mt-0.5 list-disc pl-4">
+          <li v-for="finding in scan.info.duplicateElements.slice(0, 5)" :key="finding.pointer" class="break-all font-mono">
+            {{ elementFindingText(finding) }}
+          </li>
+        </ul>
+        <p v-if="scan.info.duplicateElements.length > 5" class="mt-0.5">
+          and {{ scan.info.duplicateElements.length - 5 }} more…
         </p>
       </div>
     </div>

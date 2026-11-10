@@ -14,7 +14,7 @@ This document explains how JSON Studio is built, the reasoning behind its key de
 | Styling | Tailwind CSS v4 | Design tokens via CSS custom properties (light/dark themes) |
 | Code editor | CodeMirror 6 | `Code` view with highlighting + error-line decoration |
 | State | Pinia | `document`, `preferences`, `toast` stores |
-| Tests | Vitest + @vue/test-utils + happy-dom | 187 tests (19 files) + 6 Playwright E2E |
+| Tests | Vitest + @vue/test-utils + happy-dom | 196 tests (19 files) + 6 Playwright E2E |
 
 ---
 
@@ -98,8 +98,8 @@ Invariant: **no URL pollution, no history leakage, no channel left open, payload
 Modern V8 `JSON.parse` errors no longer include reliable positions, and engines only report the *first* syntax problem. The scanner (`validate.ts`) walks the raw text and reports:
 
 - Trailing commas, missing commas, unclosed brackets, bad escapes, unterminated strings, invalid literals — each with **byte offset → line/column** mapping.
-- **Integrity findings** (data-class issues, not syntax): duplicate property names (reported per object with `occurrences`), numbers exceeding 15 significant digits (`precisionNotes`), and maximum nesting depth.
-- Guard: documents over ~20 MB skip the scan and fall back to `JSON.parse` (`scanSkipped`), enforced by the 187-test suite's performance benchmarks at 100 KB / 1 MB / 5 MB.
+- **Integrity findings** (data-class issues, not syntax): duplicate property names (reported per object with `occurrences`), duplicate array elements (`duplicateElements` — identical items detected via a whitespace-insensitive FNV-1a content signature, each group reporting an RFC 6901 pointer to the first occurrence and its count), numbers exceeding 15 significant digits (`precisionNotes`), and maximum nesting depth.
+- Guard: documents over ~20 MB skip the scan and fall back to `JSON.parse` (`scanSkipped`), enforced by the 196-test suite's performance benchmarks at 100 KB / 1 MB / 5 MB.
 
 
 The scanner never evaluates code and never uses `eval`/`new Function` — nothing in the repo does.
@@ -166,8 +166,8 @@ Nothing in `lib/` imports Vue or Pinia — the boundary is intentional so browse
 
 ## 10. Testing architecture
 
-- **Unit (144)** — pure JSON engine modules (incl. 12 reprinter tests, 12 repair/separator-scan tests incl. a ~20 KB deep-colon regression, and the error-highlight range mapper), page-inspection helpers (JSONP unwrap, embedded-JSON container scans, injected-source self-containment), workspace-tab routing, and browser-API mocks (storage/session/preferences).
-- **Component (43)** — components, stores, popup, TreeView mounting with happy-dom; tree row URL links, inner/outer copy emission, expansion preservation, integrity report rendering, and the EditorPane error-highlight mirror (incl. its paint-order guard) included.
+- **Unit (152)** - pure JSON engine modules (incl. 12 reprinter tests, 12 repair/separator-scan tests incl. a ~20 KB deep-colon regression, and the error-highlight range mapper), page-inspection helpers (JSONP unwrap, embedded-JSON container scans, injected-source self-containment), workspace-tab routing, and browser-API mocks (storage/session/preferences).
+- **Component (44)** — components, stores, popup, TreeView mounting with happy-dom; tree row URL links, inner/outer copy emission, expansion preservation, integrity report rendering (duplicate keys + duplicate array elements), and the EditorPane error-highlight mirror (incl. its paint-order guard) included.
 - **Performance (included in unit)** — 100 KB < 500 ms, 1 MB < 2000 ms, 5 MB (parse only) < 5000 ms.
 - **E2E (6, passing)** — Playwright Chromium loads the built extension; smoke + integrity + lossless-format + tree-virtualization + expand-all/format-preservation + validate-error-highlight flows verified in a real browser.
 

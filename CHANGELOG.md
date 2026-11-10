@@ -4,6 +4,19 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ---
 
+## [0.6.1] — 2026-11-09 — Duplicate array elements in the Integrity Report
+
+### Added
+1. **Integrity Report: duplicate array elements** (user proposal — their sample document contained three byte-identical records in the root array that no integrity check flagged). The flagship report detected only duplicate *keys within one object*; repeated *array items* — the signature of a failed dedup, a retry loop, or double-joined data — went unflagged. The scanner now also records a per-element content signature during the RFC 8259 array walk:
+   - `elementSignature()` hashes the element's exact token stream with **whitespace outside strings skipped** (whitespace inside strings is significant, so `{"a b": 1}` and `{"ab": 1}` still differ); escape-spelling differences intentionally do not collide, matching the verbatim-token stance. Two independent 32-bit FNV-1a lanes keep collisions negligible while map keys stay fixed-size strings even for multi-MB documents — no value materialization, still a single pass.
+   - Findings render as `{ pointer, occurrences }` per group (RFC 6901 pointer to the **first** occurrence, plus how many times it repeats), surfaced in `ErrorBanner.vue` as a *"Duplicate array elements"* card ("every copy is kept, unlike duplicate keys — but identical items usually mean a failed dedup … compare the sources before trusting the counts") and folded into the integrity summary line ("1 duplicate key, 2 duplicate entries, …").
+   - Same caps and guards as duplicate keys: findings capped at `MAX_DUPLICATE_FINDINGS` (20), nested arrays report full pointer paths, documents over ~20 MB keep the scan guard.
+
+### Tests
+- **196 Vitest tests (19 files) + 6 Playwright E2E tests**, all passing. New: 8 scanner tests (identical objects w/ first-occurrence pointer, whitespace-insensitive collapse, duplicate scalars, string-whitespace false-positive guard, nested pointer paths, keys+elements co-reporting, the 20-finding cap, unique-arrays silent) + 1 `ErrorBanner` component test (duplicate-element card + occurrence text).
+
+---
+
 ## [0.6.0] — 2026-11-08 — In-editor error highlighting + real Auto-Repair
 
 ### Added
