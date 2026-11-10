@@ -7,13 +7,15 @@
  * mistakes: trailing commas, missing commas, unclosed brackets, bad quoting,
  * invalid escapes and stray tokens.
  *
- * It also collects informational findings (duplicate keys, numbers whose
- * precision exceeds IEEE-754 double guarantees, maximum nesting depth).
+ * It also collects informational findings (duplicate keys, repeated array
+ * elements, numbers whose precision exceeds IEEE-754 double guarantees,
+ * maximum nesting depth).
  *
  * Performance: single pass, character-index based, independent of document
  * size (~50-200ms for 5MB in practice). No values are materialized.
  */
 import type {
+  DuplicateElementFinding,
   DuplicateKeyFinding,
   JsonDiagnostic,
   ScanResult,
@@ -48,6 +50,7 @@ export class JsonScanner {
   private maxDepthSeen = 0;
   private readonly duplicateKeys: DuplicateKeyFinding[] = [];
   private readonly reportedDuplicatePointers = new Set<string>();
+  private readonly duplicateElements: DuplicateElementFinding[] = [];
   private precisionNotes = 0;
   private readonly pathSegments: string[] = [];
 
@@ -103,6 +106,7 @@ export class JsonScanner {
       scanSkipped: false,
       info: {
         duplicateKeys: this.duplicateKeys,
+        duplicateElements: this.duplicateElements,
         precisionNotes: this.precisionNotes,
         maxDepth: this.maxDepthSeen,
       },
@@ -229,6 +233,9 @@ export class JsonScanner {
     }
     this.expect(OPEN_BRACKET, "Expected '[' to start an array.");
     let index = 0;
+    // Content signature per element (first occurrence -> count + finding).
+    // Detects repeated array items, e.g. a failed dedup or double-joined rows.
+    const seenSignatures = new Map<string, { pointer: string; finding: DuplicateElementFinding | null; count: number }>();
     this.skipWhitespace();
     if (this.current() === CLOSE_BRACKET) {
       this.pos++;
@@ -244,6 +251,27 @@ export class JsonScanner {
       this.pathSegments.push(String(index));
       this.parseValue();
       this.pathSegments.pop();
+      // Flag duplicate array elements: identical normalized content.
+      if (this.duplicateElements.length < MAX_DUPLICATE_FINDINGS) {
+        const signature = elementSignature(this.text, itemOffset, this.pos);
+        const seen = seenSignatures.get(signature);
+        if (seen === undefined) {
+          seenSignatures.set(signature, {
+            pointer: buildSegmentsPointer(this.pathSegments, String(index)),
+            finding: null,
+            count: 1,
+          });
+        } else {
+          seen.count++;
+          if (seen.finding === null) {
+            const finding: DuplicateElementFinding = { pointer: seen.pointer, occurrences: seen.count };
+            seen.finding = finding;
+            this.duplicateElements.push(finding);
+          } else {
+            seen.finding.occurrences = seen.count;
+          }
+        }
+      }
       index++;
       this.skipWhitespace();
       const separator = this.current();
@@ -372,6 +400,44 @@ function buildSegmentsPointer(segments: string[], key: string): string {
     pointer = pointer === '' ? `/${escapeToken(segment)}` : `${pointer}/${escapeToken(segment)}`;
   }
   return `${pointer}/${escapeToken(key)}`;
+}
+
+/**
+ * Whitespace-insensitive content signature of an array element slice.
+ *
+ * Walks the slice token-wise: whitespace outside strings is skipped, while
+ * whitespace inside strings is hashed (it is significant). String literals
+ * never cross the quote/backslash state, so `{"a": 1}` and `{ "a": 1 }`
+ * collide but `{"a b": 1}` and `{"ab": 1}` do not.
+ *
+ * Two independent 32-bit FNV-1a lanes make accidental collisions negligible
+ * while keeping the map keys tiny (fixed-size strings) even for multi-MB
+ * documents; escape-spelling differences intentionally do not collide,
+ * matching the scanner's verbatim-token stance.
+ */
+function elementSignature(text: string, start: number, end: number): string {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x811c9dc5;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < end; i++) {
+    const code = text.charCodeAt(i);
+    if (!inString && (code === 0x20 || code === 0x09 || code === 0x0a || code === 0x0d)) continue;
+    if (!inString) {
+      if (code === QUOTE) inString = true;
+    } else if (escaped) {
+      escaped = false;
+    } else if (code === BACKSLASH) {
+      escaped = true;
+    } else if (code === QUOTE) {
+      inString = false;
+    }
+    h1 ^= code;
+    h1 = Math.imul(h1, 0x01000193);
+    h2 = (h2 ^ (code + 0x9e3779b9)) >>> 0;
+    h2 = Math.imul(h2, 0x85ebca6b);
+  }
+  return `${(h1 >>> 0).toString(36)}${(h2 >>> 0).toString(36)}`;
 }
 
 function escapeToken(token: string): string {

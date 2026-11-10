@@ -3,7 +3,7 @@
 > A modern, privacy-first JSON formatter, viewer, validator, and developer utility — built as a Chrome Extension.
 
 ![Build Passing](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-187%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3.x-42b883?logo=vue.js&logoColor=white)
@@ -45,6 +45,7 @@
 ### 🛡️ Integrity Report (flagship)
 Catching problems every other formatter silently hides:
 - **Duplicate property names** — valid JSON, but data is silently lost on re-serialization; every duplicate shown with its RFC 6901 JSON Pointer
+- **Duplicate array elements** — identical items repeated across an array (the signature of a failed dedup, a retry loop, or double-joined data) detected with a whitespace-insensitive content signature; each group shown with the pointer to its first occurrence and occurrence count
 - **Precision-risk numbers** — numbers over 15 significant digits (large generated / Snowflake-style IDs) flagged before IEEE-754 rounding shifts them
 - **Summary line above every document** — one glance tells you whether it is safe to round-trip this JSON
 
@@ -136,6 +137,7 @@ The most popular JSON Formatter (2M users) dropped to **1.5★ / 2.1K ratings** 
 Every other formatter does the same three things: parse, highlight, pretty-print. None of them tell you **what is quietly broken about your JSON**. JSON Studio's flagship feature is the **Integrity Report** — scanning for problems that `JSON.parse` and every pretty-printer silently swallow:
 
 - **Duplicate property names** — valid per RFC 8259, but re-serialization keeps only the *last* value. If you round-trip JSON through any other formatter, you may be silently discarding data. JSON Studio shows every duplicate with its RFC 6901 JSON Pointer.
+- **Duplicate array elements** — identical items repeated across an array (a failed dedup, a retry loop, double-joined data). Unlike duplicate keys these are *not* silently discarded — the copies live on in every tool — so they usually mean the counts you are about to trust are inflated. Detected via a whitespace-insensitive content signature of each element; each reported group names the pointer to the first occurrence and how many times it repeats.
 - **Precision-risk numbers** — integers over 15 significant digits (e.g., generated IDs, Snowflake/Twitter IDs) are parsed as IEEE-754 doubles and can shift by ±1 or worse when formatted, minified, or copy-pasted through a JS layer. This is a classic source of "why is this ID wrong" bugs.
 - **Nesting depth** — reported in the status bar, guarded at the tree viewer.
 
@@ -147,7 +149,7 @@ A summary line appears above every document: *"Integrity report — 1 duplicate 
 
 - **A workspace, not a rewrite** — full-page app with tree / code / raw views, search, copy utilities, import/export. Most competitors are a single collapsible tree.
 - **Modern error reporting** — a hand-written RFC 8259 scanner that actually explains *what* is wrong and *where* (line + column + byte offset), because modern V8 no longer includes positions in parse errors.
-- **Performance as a test** - parse/scan benchmarks at 100 KB, 1 MB, and 5 MB are part of the 187-test suite, so "fast on large documents" is enforced, not claimed.
+- **Performance as a test** - parse/scan benchmarks at 100 KB, 1 MB, and 5 MB are part of the 196-test suite, so "fast on large documents" is enforced, not claimed.
 - **Virtualized tree** — only visible rows render; 50 000-node expand guard.
 - **Clickable URLs** — HTTP(S) string values in the tree open in a new tab (`rel="noopener noreferrer"`).
 
@@ -310,7 +312,7 @@ All preferences are persisted via Chrome Storage and survive browser restarts.
 npm run test
 ```
 
-- **187 tests** across **19 test files** - all passing
+- **196 tests** across **19 test files** - all passing
 - Covers JSON parsing, formatting, validation (incl. the error-highlight range mapper), repair/typegen, tree building, search, pointer generation, stats, page-inspection helpers, browser storage APIs, and UI components. Plus **6 Playwright E2E tests** (real Chromium).
 
 ### Type Checking

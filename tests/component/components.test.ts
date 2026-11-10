@@ -235,7 +235,7 @@ describe('IntegrityPanel (ErrorBanner)', () => {
     ok: true,
     error: null,
     scanSkipped: false,
-    info: { duplicateKeys: [], precisionNotes: 0, maxDepth: 1 },
+    info: { duplicateKeys: [], duplicateElements: [], precisionNotes: 0, maxDepth: 1 },
   };
 
   it('shows the integrity report with duplicate-key and precision findings', () => {
@@ -248,6 +248,7 @@ describe('IntegrityPanel (ErrorBanner)', () => {
           scanSkipped: false,
           info: {
             duplicateKeys: [{ pointer: '/a~1b', occurrences: 2 }],
+            duplicateElements: [],
             precisionNotes: 3,
             maxDepth: 4,
           },
@@ -264,6 +265,29 @@ describe('IntegrityPanel (ErrorBanner)', () => {
   it('stays quiet when the document has no integrity risks', () => {
     const wrapper = mount(ErrorBanner, { props: { error: null, scan: baseScan } });
     expect(wrapper.text()).toContain('No structural risks found');
+  });
+
+  it('reports duplicate array elements with occurrence counts', () => {
+    const wrapper = mount(ErrorBanner, {
+      props: {
+        error: null,
+        scan: {
+          ok: true,
+          error: null,
+          scanSkipped: false,
+          info: {
+            duplicateKeys: [],
+            duplicateElements: [{ pointer: '/0', occurrences: 3 }],
+            precisionNotes: 0,
+            maxDepth: 2,
+          },
+        },
+      },
+    });
+    const text = wrapper.text();
+    expect(text).toContain('1 duplicate entry');
+    expect(text).toContain('Duplicate array elements');
+    expect(text).toContain('Element at 0 repeats 3 times with identical content');
   });
 
   it('describes syntax errors with 1-based line/column', () => {

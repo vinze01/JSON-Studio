@@ -45,12 +45,20 @@ export interface JsonDiagnostic {
 /** Structural details collected by the scanner. */
 export interface ScanInfo {
   duplicateKeys: DuplicateKeyFinding[];
+  duplicateElements: DuplicateElementFinding[];
   precisionNotes: number;
   maxDepth: number;
 }
 
 export interface DuplicateKeyFinding {
   pointer: string;
+  occurrences: number;
+}
+
+export interface DuplicateElementFinding {
+  /** RFC 6901 pointer to the FIRST occurrence of the repeated element. */
+  pointer: string;
+  /** How many times identical content appears in the array (>= 2). */
   occurrences: number;
 }
 
