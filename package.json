@@ -1,7 +1,7 @@
 {
   "name": "json-studio",
   "description": "A modern, privacy-first JSON formatter, viewer, validator and developer utility for Chrome.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "private": true,
   "scripts": {
