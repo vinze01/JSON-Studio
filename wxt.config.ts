@@ -8,7 +8,7 @@ export default defineConfig({
   manifest: {
     name: 'JSON Studio',
     description:
-      'Privacy-first JSON formatter, viewer, validator & integrity checker. Spot duplicate keys, precision-risk numbers & duplicate array elements. 100% local.',
+      'Privacy-first JSON formatter, viewer, validator & integrity checker. Finds duplicate keys, elements & precision risks. 100% local.',
     homepage_url: 'https://github.com/vinze01/JSON-Studio',
     permissions: ['storage', 'activeTab', 'scripting'],
     icons: {
