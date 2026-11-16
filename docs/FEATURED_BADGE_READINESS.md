@@ -1,6 +1,6 @@
 # Chrome Web Store Featured Badge — Readiness Report
 
-**Extension:** JSON Studio · **Repo state audited:** v1.0.1 (commit `82cb868`) + this audit's changes
+**Extension:** JSON Studio · **Audited:** v1.0.1 (commit `82cb868`); fixes landed as commit `0a4af78`; shipping as v1.0.2
 **Date:** November 17, 2026
 **Scope:** Audit, targeted fixes, and regression tests against Google's published Featured-badge quality standards. No new features, no new permissions, no version bump, no store submission.
 
@@ -27,7 +27,7 @@ Classification keys used below: **Passed** (verified compliant), **Fixed** (foun
 | 1.4 | **No remote code** | Grep across `src/`: zero `fetch(`, `XMLHttpRequest`, `WebSocket`, dynamic `import()`, `eval(`, `new Function`, remote `<script>`. All JS is bundled locally by WXT. | **Passed** (policy) |
 | 1.5 | **Single purpose** | One coherent purpose: local JSON analysis/formatting. Page inspection serves the same purpose (bringing JSON into the tool), is strictly user-initiated, and matches the declared description. | **Passed** (policy) |
 | 1.6 | **CSP compliance** | MV3 default CSP; no inline event handlers, no remote resources, no `unsafe-eval` requests. | **Passed** (policy) |
-| 1.7 | **Honest metadata** | Name/description match actual functionality (formatter, viewer, validator, integrity checker, page inspection). The v1.0.1 description explicitly mentions the duplicate-detection feature. `wxt.config.ts` had drifted from the shipped manifest — now aligned, plus `homepage_url` and `action.default_icon` added. | **Fixed** → **Passed** |
+| 1.7 | **Honest metadata** | Name/description match actual functionality (formatter, viewer, validator, integrity checker, page inspection). The description names the duplicate-detection feature and fits the store's 132-character manifest limit (the v1.0.1 build's 152-char description was rejected on upload — shortened to 130). `wxt.config.ts` had drifted from the shipped manifest — now aligned, plus `homepage_url` and `action.default_icon` added. | **Fixed** → **Passed** |
 | 1.8 | **No misleading claims** | "100% local" claim verified: no network code exists in the bundle (1.4); session payloads never leave the browser. | **Passed** (policy) |
 
 **Permission-minimization analysis (per audit requirement).** Each of the three permissions was evaluated for elimination:
@@ -79,7 +79,7 @@ All fixes preserve the existing design system (Tailwind tokens, `btn`/`btn-icon`
 | 4.2 | **Popup "Settings" opened a bare workspace.** The popup navigates to `workspace.html?settings=1`, but the workspace ignored the parameter. | High | **Fixed** — workspace opens the Settings dialog when `?settings=1` is present; E2E journey added. |
 | 4.3 | **One accidental click on Clear erased the whole document.** Destructive action with no confirmation — a direct best-practices miss ("confirmation for destructive actions"). | High | **Fixed** — arm-then-confirm: first click shows "Confirm clear?" + warning icon for 3 s; second click confirms; blur/timeout disarms. Two component tests. |
 | 4.4 | **Closing search dropped keyboard focus on `<body>`.** | Medium | **Fixed** — closing returns focus to the toolbar Search button. |
-| 4.5 | **Popup version hardcoded** (`v1.0.0`) while the release is v1.0.1 — drift visible to reviewers. | Low | **Fixed** — version now read from `chrome.runtime.getManifest()`. |
+| 4.5 | **Popup version hardcoded** (`v1.0.0`) while the release was v1.0.1 — drift visible to reviewers. | Low | **Fixed** — version now read from `chrome.runtime.getManifest()`. |
 | 4.6 | **Manifest config drift** vs shipped build (description, `homepage_url`, toolbar icon). `action.default_icon` makes the toolbar icon deterministic instead of icon-fallback. | Low | **Fixed** in `wxt.config.ts`. |
 | 4.7 | Visual consistency audit (typography scale, spacing, button dimensions, radii, light/dark parity, hover/disabled states): all UI goes through shared `btn`/`btn-icon`/`panel` component classes and theme tokens; light/dark tokens both defined. No divergent one-off styling found that warranted change. | **Passed** |
 | 4.8 | Empty/loading/error states: editor placeholder, "Enter valid JSON" tree placeholder, processing indicator in the status bar, error banner with line/column, toast feedback for copy/export/import/repair — all present. | **Passed** |

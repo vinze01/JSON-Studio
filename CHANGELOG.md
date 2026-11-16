@@ -1,10 +1,10 @@
 # Changelog — JSON Studio
 
-All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project has not yet had its first store release, so versions below are pre-release milestones.
+All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); v1.0.2 is the first store release, so versions below it are pre-release milestones.
 
 ---
 
-## [Unreleased] — Chrome Web Store Featured-badge readiness audit
+## [1.0.2] — 2026-11-17 — Chrome Web Store Featured-badge readiness audit
 
 Quality audit against [Google's CWS Featured badge guidelines](https://support.google.com/chrome_webstore/answer/1050673) and the [store best practices](https://developer.chrome.com/docs/webstore/best-practices); no new features or permissions. Full findings in `docs/FEATURED_BADGE_READINESS.md`.
 
@@ -15,6 +15,7 @@ Quality audit against [Google's CWS Featured badge guidelines](https://support.g
 - **A single accidental click on Clear wiped the whole document.** Clear is now arm-then-confirm: the first click switches the button to "Confirm clear?" with a warning icon for 3 s; the second click confirms; blur, waiting, or dismissal disarms.
 - **The popup showed a hardcoded `v1.0.0`** regardless of the released version; it now reads `chrome.runtime.getManifest().version`.
 - **`wxt.config.ts` had drifted from the shipped v1.0.1 manifest** (older description, no `homepage_url`, no toolbar icon). The config now matches the released build and additionally declares `action.default_icon`, so the toolbar icon no longer depends on a fallback.
+- **The manifest description exceeded the Chrome Web Store's 132-character limit** (152 chars in the v1.0.1 build), blocking store upload with "The description field in manifest is too long". Shortened to 130 chars while keeping every differentiator (formatter/viewer/validator/integrity checker, duplicate keys, duplicate array elements, precision risks, 100% local).
 
 ### Accessibility
 - **`Modal` traps keyboard focus**: Tab / Shift+Tab wrap inside the dialog instead of escaping into the page behind the overlay (WCAG 2.4.3 focus order).
