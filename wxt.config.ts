@@ -8,7 +8,8 @@ export default defineConfig({
   manifest: {
     name: 'JSON Studio',
     description:
-      'A modern, privacy-first JSON formatter, viewer, validator and developer utility. All processing happens locally.',
+      'Privacy-first JSON formatter, viewer, validator & integrity checker. Spot duplicate keys, precision-risk numbers & duplicate array elements. 100% local.',
+    homepage_url: 'https://github.com/vinze01/JSON-Studio',
     permissions: ['storage', 'activeTab', 'scripting'],
     icons: {
       16: '/icon/16.png',
@@ -17,7 +18,13 @@ export default defineConfig({
       128: '/icon/128.png',
     },
     action: {
-      default_title: 'Open JSON Studio',
+      default_title: 'JSON Studio',
+      default_icon: {
+        16: '/icon/16.png',
+        32: '/icon/32.png',
+        48: '/icon/48.png',
+        128: '/icon/128.png',
+      },
     },
     commands: {
       'open-workspace': {

@@ -3,7 +3,7 @@
 > A modern, privacy-first JSON formatter, viewer, validator, and developer utility — built as a Chrome Extension.
 
 ![Build Passing](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-204%20passing-brightgreen)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3.x-42b883?logo=vue.js&logoColor=white)
@@ -265,9 +265,10 @@ Validation happens automatically as you type. Any error is shown in the **Error 
 
 1. Load valid JSON.
 2. Select the **Tree** view tab.
-3. Navigate with arrow keys; press **Enter** or **Space** to expand/collapse nodes.
-4. Right-click (or use the copy icon) on any node to copy its value or its JSON Pointer path.
-5. Use **Expand All** / **Collapse All** in the toolbar.
+3. Navigate with arrow keys; press **Enter** or **Space** to expand/collapse containers.
+4. On a leaf row, press **Enter** to copy the value; press **C** to copy the row's JSON Pointer (keyboard equivalents of the row copy buttons).
+5. Right-click (or use the copy icon) on any node to copy its value or its JSON Pointer path.
+6. Use **Expand All** / **Collapse All** in the toolbar.
 
 ### Searching
 
@@ -275,6 +276,7 @@ Validation happens automatically as you type. Any error is shown in the **Error 
 2. Type your search term — results highlight in the tree.
 3. Use ▲ / ▼ arrows to navigate between matches; the tree auto-scrolls and reveals the active match.
 4. Toggle **Case Sensitive** as needed.
+5. Close the panel with **Escape** or the ✕ button — keyboard focus returns to the toolbar Search button, so you can keep navigating without a mouse.
 
 ### Inspecting a Page
 
@@ -290,6 +292,10 @@ Drag a `.json` file onto the editor pane, or click **Import** and select the fil
 ### Exporting a File
 
 Click **Export** → choose **Formatted** or **Minified** to download the current JSON as a `.json` file.
+
+### Clearing the Editor
+
+The **Clear** button is a two-step destructive action: the first click arms it (**"Confirm clear?"**, with a warning icon) and the second click within 3 seconds actually wipes the document. Clicking elsewhere, moving focus, or waiting disarms it — an accidental single click can no longer erase your work.
 
 ### Changing Themes & Preferences
 
@@ -312,8 +318,8 @@ All preferences are persisted via Chrome Storage and survive browser restarts.
 npm run test
 ```
 
-- **196 tests** across **19 test files** - all passing
-- Covers JSON parsing, formatting, validation (incl. the error-highlight range mapper), repair/typegen, tree building, search, pointer generation, stats, page-inspection helpers, browser storage APIs, and UI components. Plus **6 Playwright E2E tests** (real Chromium).
+- **204 tests** across **19 test files** - all passing
+- Covers JSON parsing, formatting, validation (incl. the error-highlight range mapper), repair/typegen, tree building, search, pointer generation, stats, page-inspection helpers, browser storage APIs, and UI components. Plus **7 Playwright E2E tests** (real Chromium).
 
 ### Type Checking
 

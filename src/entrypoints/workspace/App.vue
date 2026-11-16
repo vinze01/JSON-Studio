@@ -241,6 +241,9 @@ function closeSearch(): void {
   searchQuery.value = '';
   matches.value = [];
   activeMatchIndex.value = -1;
+  // Return focus to the toolbar search toggle: closing the panel would
+  // otherwise drop focus on <body> and keyboard users would lose their place.
+  nextTick(() => (document.getElementById('toolbar-search') as HTMLElement | null)?.focus());
 }
 
 /* ---------------------------- import / export ----------------------------- */
@@ -304,14 +307,19 @@ function onClear(): void {
 onMounted(async () => {
   resolveTheme();
   documentStore.setViewMode(preferences.defaultView);
-  const wantsTabPayload = new URLSearchParams(window.location.search).get('source') === 'tab';
-  if (wantsTabPayload) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('source') === 'tab') {
     const loaded = await documentStore.loadPendingFromTab();
     if (loaded) {
       toast.success('Loaded JSON captured from the page');
     } else {
       toast.info('No captured document found. Open this workspace directly to paste JSON.');
     }
+  }
+  // The popup's "Settings" shortcut opens the workspace with ?settings=1:
+  // surface the settings dialog immediately instead of a bare workspace.
+  if (params.get('settings') === '1') {
+    settingsOpen.value = true;
   }
 });
 </script>

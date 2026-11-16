@@ -21,12 +21,48 @@ watch(
       dialogElement.value?.focus();
     }
   },
+  // SettingsModal mounts Modal with open already true, so the change
+  // callback alone never fires - the dialog must grab focus on mount too,
+  // otherwise Esc (bound on the overlay) never reaches it.
+  { immediate: true },
 );
 
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') {
     event.stopPropagation();
     emit('close');
+    return;
+  }
+  if (event.key === 'Tab') trapFocus(event);
+}
+
+/**
+ * Keeps keyboard focus inside the dialog: Tab / Shift+Tab wrap within the
+ * dialog's focusable elements instead of escaping into the page behind the
+ * overlay (WCAG 2.4.3 focus order; the trap is inert for non-dialog targets).
+ */
+function trapFocus(event: KeyboardEvent): void {
+  const dialog = dialogElement.value;
+  if (!dialog || !dialog.contains(event.target as Node)) return;
+  const focusable = Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]',
+    ),
+  );
+  if (focusable.length === 0) return;
+  const first = focusable[0]!;
+  const last = focusable[focusable.length - 1]!;
+  const active = document.activeElement;
+  const inList = focusable.includes(active as HTMLElement);
+  if (event.shiftKey) {
+    // Wrap backwards from the first stop; park on the last from elsewhere.
+    if (active === first || !inList) {
+      event.preventDefault();
+      last.focus();
+    }
+  } else if (active === last || !inList) {
+    event.preventDefault();
+    first.focus();
   }
 }
 

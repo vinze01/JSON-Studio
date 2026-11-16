@@ -14,7 +14,7 @@ This document explains how JSON Studio is built, the reasoning behind its key de
 | Styling | Tailwind CSS v4 | Design tokens via CSS custom properties (light/dark themes) |
 | Code editor | CodeMirror 6 | `Code` view with highlighting + error-line decoration |
 | State | Pinia | `document`, `preferences`, `toast` stores |
-| Tests | Vitest + @vue/test-utils + happy-dom | 196 tests (19 files) + 6 Playwright E2E |
+| Tests | Vitest + @vue/test-utils + happy-dom | 204 tests (19 files) + 7 Playwright E2E |
 
 ---
 
@@ -167,9 +167,9 @@ Nothing in `lib/` imports Vue or Pinia — the boundary is intentional so browse
 ## 10. Testing architecture
 
 - **Unit (152)** - pure JSON engine modules (incl. 12 reprinter tests, 12 repair/separator-scan tests incl. a ~20 KB deep-colon regression, and the error-highlight range mapper), page-inspection helpers (JSONP unwrap, embedded-JSON container scans, injected-source self-containment), workspace-tab routing, and browser-API mocks (storage/session/preferences).
-- **Component (44)** — components, stores, popup, TreeView mounting with happy-dom; tree row URL links, inner/outer copy emission, expansion preservation, integrity report rendering (duplicate keys + duplicate array elements), and the EditorPane error-highlight mirror (incl. its paint-order guard) included.
+- **Component (52)** — components, stores, popup, TreeView mounting with happy-dom; tree row URL links, inner/outer copy emission, expansion preservation, integrity report rendering (duplicate keys + duplicate array elements), the EditorPane error-highlight mirror (incl. its paint-order guard), Modal focus trap + mount focus, Toolbar clear-confirm arm/disarm, SegmentedControl roving-tabindex radio group, and tree keyboard copy (Enter value / C pointer) included.
 - **Performance (included in unit)** — 100 KB < 500 ms, 1 MB < 2000 ms, 5 MB (parse only) < 5000 ms.
-- **E2E (6, passing)** — Playwright Chromium loads the built extension; smoke + integrity + lossless-format + tree-virtualization + expand-all/format-preservation + validate-error-highlight flows verified in a real browser.
+- **E2E (7, passing)** — Playwright Chromium loads the built extension; smoke + integrity + lossless-format + tree-virtualization + expand-all/format-preservation + validate-error-highlight + popup-settings-shortcut (`?settings=1`) flows verified in a real browser.
 
 ---
 

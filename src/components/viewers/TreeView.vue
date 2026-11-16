@@ -273,8 +273,20 @@ function onKeydown(event: KeyboardEvent): void {
     case ' ':
       if (node?.hasChildren) {
         toggle([node.pointer]);
+      } else if (node) {
+        // Leaf rows have nothing to toggle - Enter copies the value so the
+        // hover-only row actions stay reachable from the keyboard.
+        copyValue(node);
       }
       event.preventDefault();
+      break;
+    case 'c':
+    case 'C':
+      // Plain 'c' only - never hijack Ctrl/Cmd+C.
+      if (node && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        copyPath(node);
+        event.preventDefault();
+      }
       break;
     default:
       break;

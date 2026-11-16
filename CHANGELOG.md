@@ -4,6 +4,28 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — Chrome Web Store Featured-badge readiness audit
+
+Quality audit against [Google's CWS Featured badge guidelines](https://support.google.com/chrome_webstore/answer/1050673) and the [store best practices](https://developer.chrome.com/docs/webstore/best-practices); no new features or permissions. Full findings in `docs/FEATURED_BADGE_READINESS.md`.
+
+### Fixed
+- **The Settings dialog was not keyboard-dismissable.** `Modal.vue`'s focus watcher had no `immediate: true`, but `SettingsModal` mounts `Modal` with `open` already true — the dialog never grabbed focus, so the overlay-bound Escape handler never received key events and Esc did nothing (verified in real Chromium; affects both the header gear and the popup's `?settings=1` shortcut). The dialog now focuses itself on mount.
+- **The popup's Settings button opened a bare workspace.** The popup opens `workspace.html?settings=1`, but the workspace ignored the parameter and never surfaced the dialog. The workspace now opens Settings immediately when `?settings=1` is present (E2E-verified journey).
+- **Closing the search panel dropped keyboard focus** on `<body>`, losing keyboard users' place. Closing search now returns focus to the toolbar Search button.
+- **A single accidental click on Clear wiped the whole document.** Clear is now arm-then-confirm: the first click switches the button to "Confirm clear?" with a warning icon for 3 s; the second click confirms; blur, waiting, or dismissal disarms.
+- **The popup showed a hardcoded `v1.0.0`** regardless of the released version; it now reads `chrome.runtime.getManifest().version`.
+- **`wxt.config.ts` had drifted from the shipped v1.0.1 manifest** (older description, no `homepage_url`, no toolbar icon). The config now matches the released build and additionally declares `action.default_icon`, so the toolbar icon no longer depends on a fallback.
+
+### Accessibility
+- **`Modal` traps keyboard focus**: Tab / Shift+Tab wrap inside the dialog instead of escaping into the page behind the overlay (WCAG 2.4.3 focus order).
+- **`SegmentedControl` is now a proper ARIA radio group**: roving tabindex (only the checked option is a tab stop), ArrowLeft/ArrowRight move selection and focus; the redundant manual `update:modelValue` emit that double-fired on every change was removed (assignment through `defineModel` already emits).
+- **Tree keyboard parity**: on a leaf row, **Enter** copies the value and plain **C** copies the JSON Pointer (row actions were mouse-only before; modifier keys are never hijacked).
+
+### Tests
+- **204 Vitest tests (19 files) + 7 Playwright E2E tests**, all passing. New: tree keyboard copy (×2), Modal focus trap + mount focus, Toolbar clear-confirm arm/confirm + blur disarm, SegmentedControl arrow navigation, popup manifest version, and an E2E `?settings=1` journey (opens dialog, Esc closes, workspace remains).
+
+---
+
 ## [0.6.1] — 2026-11-09 — Duplicate array elements in the Integrity Report
 
 ### Added

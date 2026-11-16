@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { mount } from '@vue/test-utils';
 import TreeView from '@/components/viewers/TreeView.vue';
+import { useToastStore } from '@/stores/toast';
 import type { JsonValue } from '@/types';
 
 beforeEach(() => {
@@ -69,6 +70,34 @@ describe('TreeView', () => {
       },
     });
     expect(wrapper.find('[aria-selected="true"]').exists()).toBe(true);
+  });
+
+  it('copies a leaf value with Enter so row actions stay keyboard-reachable', async () => {
+    const toast = useToastStore();
+    const copy = vi.spyOn(toast, 'copyWithToast').mockResolvedValue(true);
+    const wrapper = makeTree({ alpha: 'two' } as JsonValue);
+    const tree = wrapper.find('[role="tree"]');
+
+    // Selection starts on the root container; ArrowDown moves to the leaf row.
+    await tree.trigger('keydown', { key: 'ArrowDown' });
+    await tree.trigger('keydown', { key: 'Enter' });
+    expect(copy).toHaveBeenCalledWith('"two"', 'Value copied');
+  });
+
+  it("copies the selected row's JSON Pointer with the plain c key", async () => {
+    const toast = useToastStore();
+    const copy = vi.spyOn(toast, 'copyWithToast').mockResolvedValue(true);
+    const wrapper = makeTree({ alpha: 'two' } as JsonValue);
+    const tree = wrapper.find('[role="tree"]');
+
+    // Plain c on the root copies the root pointer.
+    await tree.trigger('keydown', { key: 'c' });
+    expect(copy).toHaveBeenCalledWith('/', 'JSON Pointer copied');
+
+    copy.mockClear();
+    // Ctrl+C is native copy - it must not be hijacked.
+    await tree.trigger('keydown', { key: 'c', ctrlKey: true });
+    expect(copy).not.toHaveBeenCalled();
   });
 
   it('keeps expansion across a re-parse of the same structure (Format/Minify/Validate)', async () => {

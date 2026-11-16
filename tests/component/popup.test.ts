@@ -8,6 +8,7 @@ interface ChromeStub {
     id: string;
     getURL: (path: string) => string;
     sendMessage: ReturnType<typeof vi.fn>;
+    getManifest: ReturnType<typeof vi.fn>;
   };
   tabs: {
     query: ReturnType<typeof vi.fn>;
@@ -23,6 +24,7 @@ const chromeStub: ChromeStub = {
     id: 'test-extension-id',
     getURL: (path: string) => `chrome-extension://test-extension-id${path}`,
     sendMessage: vi.fn(),
+    getManifest: vi.fn(() => ({ version: '1.0.1' })),
   },
   tabs: {
     query: vi.fn(),
@@ -40,6 +42,7 @@ const originalChrome = (globalThis as unknown as { chrome?: unknown }).chrome;
 
 function installChrome(): ChromeStub {
   chromeStub.runtime.sendMessage.mockReset();
+  chromeStub.runtime.getManifest.mockClear();
   chromeStub.tabs.query.mockReset();
   chromeStub.tabs.create.mockReset();
   (globalThis as unknown as { chrome?: ChromeStub }).chrome = chromeStub;
@@ -86,6 +89,17 @@ describe('popup', () => {
     expect(wrapper.find('[data-testid="inspect-page"]').attributes('disabled')).toBeDefined();
     expect(wrapper.text()).toMatch(/cannot be inspected|browser ui/i);
     expect(stub.runtime.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('shows the manifest version instead of a hardcoded label', async () => {
+    const stub = installChrome();
+    stub.tabs.query.mockResolvedValue([{ id: 1, url: 'https://example.com' }]);
+    stub.runtime.getManifest.mockImplementation(() => ({ version: '9.9.9' }));
+
+    const wrapper = mount(PopupApp, { attachTo: document.body });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('v9.9.9');
   });
 
   it('reports graceful failure when no JSON is found', async () => {
