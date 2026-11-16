@@ -16,7 +16,9 @@ import {
   FoldVertical,
   Wand2,
   ListTree,
+  AlertTriangle,
 } from 'lucide-vue-next';
+import { onBeforeUnmount, ref } from 'vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import IconButton from '@/components/ui/IconButton.vue';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
@@ -59,6 +61,35 @@ const viewOptions: ToolbarOption[] = [
 function onSegmentChange(option: unknown) {
   emit('update:viewMode', option as ViewMode);
 }
+
+/* --------------------------- clear confirmation --------------------------- */
+/* Clearing destroys the whole document, so the first click only arms the
+   button ("Confirm clear?"); a second click within 3 s confirms, anything
+   else (blur, timeout, dismissal) disarms. One accidental click can no
+   longer wipe the editor. */
+
+const clearArmed = ref(false);
+let clearTimer: number | undefined;
+
+function onClear(): void {
+  if (!clearArmed.value) {
+    clearArmed.value = true;
+    clearTimer = window.setTimeout(() => {
+      clearArmed.value = false;
+    }, 3000);
+    return;
+  }
+  disarmClear();
+  emit('clear');
+}
+
+function disarmClear(): void {
+  window.clearTimeout(clearTimer);
+  clearTimer = undefined;
+  clearArmed.value = false;
+}
+
+onBeforeUnmount(() => disarmClear());
 </script>
 
 <template>
@@ -148,6 +179,7 @@ function onSegmentChange(option: unknown) {
 
     <div class="ml-auto flex items-center gap-1.5">
       <AppButton
+        id="toolbar-search"
         title="Search keys and values"
         :aria-pressed="searchOpen"
         :disabled="isEmpty"
@@ -156,9 +188,19 @@ function onSegmentChange(option: unknown) {
         <Search class="size-3.5" aria-hidden="true" />
         <span class="hidden md:inline">Search</span>
       </AppButton>
-      <AppButton variant="danger-quiet" title="Clear the document" :disabled="isEmpty" @click="emit('clear')">
-        <Trash2 class="size-3.5" aria-hidden="true" />
-        <span class="hidden md:inline">Clear</span>
+      <AppButton
+        variant="danger-quiet"
+        :title="clearArmed ? 'Click again to clear the document' : 'Clear the document'"
+        :disabled="isEmpty"
+        :class="clearArmed ? 'text-danger font-semibold' : ''"
+        :aria-label="clearArmed ? 'Confirm clearing the document' : 'Clear the document'"
+        data-testid="clear-button"
+        @click="onClear"
+        @blur="clearArmed && disarmClear()"
+      >
+        <AlertTriangle v-if="clearArmed" class="size-3.5" aria-hidden="true" />
+        <Trash2 v-else class="size-3.5" aria-hidden="true" />
+        <span class="hidden md:inline">{{ clearArmed ? 'Confirm clear?' : 'Clear' }}</span>
       </AppButton>
     </div>
   </div>

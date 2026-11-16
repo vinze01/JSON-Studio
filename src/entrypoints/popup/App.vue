@@ -40,6 +40,18 @@ const inspectDisabled = computed(
 const isExtension = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
 void isExtension;
 
+/** Extension version straight from the manifest; 'dev' outside the extension. */
+const version = (() => {
+  try {
+    if (typeof chrome !== 'undefined' && typeof chrome.runtime?.getManifest === 'function') {
+      return chrome.runtime.getManifest().version;
+    }
+  } catch {
+    // fall through to the dev label
+  }
+  return 'dev';
+})();
+
 async function surfaceContext(): Promise<void> {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -136,7 +148,7 @@ onMounted(async () => {
         {{ '{ }' }}
       </span>
       <h1 class="text-sm font-semibold">JSON Studio</h1>
-      <span class="ml-auto text-[11px] text-fg-faint">v1.0.0</span>
+      <span class="ml-auto text-[11px] text-fg-faint">v{{ version }}</span>
     </header>
 
     <main class="space-y-3 px-3 py-3">

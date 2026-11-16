@@ -53,6 +53,28 @@ describe('Toolbar', () => {
     expect(wrapper.emitted('format')).toHaveLength(1);
   });
 
+  it('supports radio arrow-key navigation with roving tabindex', async () => {
+    const wrapper = mountToolbar();
+    const radios = () => wrapper.findAll('[role="radio"]');
+    // Only the checked radio is a tab stop.
+    expect(radios()[0]!.attributes('tabindex')).toBe('0');
+    expect(radios()[1]!.attributes('tabindex')).toBe('-1');
+
+    // ArrowRight moves selection to the next view and emits the change.
+    await wrapper.find('[role="radiogroup"]').trigger('keydown', { key: 'ArrowRight' });
+    expect(wrapper.emitted('update:viewMode')?.[0]).toEqual(['code']);
+
+    // The parent applies the new value; the roving tabindex follows.
+    await wrapper.setProps({ viewMode: 'code' });
+    expect(radios()[1]!.attributes('aria-checked')).toBe('true');
+    expect(radios()[1]!.attributes('tabindex')).toBe('0');
+    expect(radios()[0]!.attributes('tabindex')).toBe('-1');
+
+    // ArrowLeft moves back to the first view.
+    await wrapper.find('[role="radiogroup"]').trigger('keydown', { key: 'ArrowLeft' });
+    expect(wrapper.emitted('update:viewMode')?.[1]).toEqual(['tree']);
+  });
+
   it('disables destructive and format actions for empty documents', () => {
     const wrapper = mountToolbar({ isEmpty: true, isValid: false });
     const disabled = wrapper.findAll('button:disabled').map((button) => button.text());
@@ -65,6 +87,35 @@ describe('Toolbar', () => {
     const titles = wrapper.findAll('button:disabled').map((button) => button.attributes('title'));
     expect(titles).toContain('Export formatted JSON file');
     expect(titles).toContain('Copy minified JSON');
+  });
+
+  it('requires a second click to confirm clearing the document', async () => {
+    const wrapper = mountToolbar();
+    const clear = () => wrapper.find('[data-testid="clear-button"]');
+
+    // First click only arms the button - the document must survive it.
+    await clear().trigger('click');
+    expect(wrapper.emitted('clear')).toBeUndefined();
+    expect(clear().text()).toContain('Confirm clear?');
+
+    // Second click confirms and clears.
+    await clear().trigger('click');
+    expect(wrapper.emitted('clear')).toHaveLength(1);
+    wrapper.unmount();
+  });
+
+  it('disarms the clear confirmation on blur', async () => {
+    const wrapper = mountToolbar();
+    const clearButton = () => wrapper.find('[data-testid="clear-button"]');
+    await clearButton().trigger('click');
+    expect(clearButton().text()).toContain('Confirm clear?');
+    await clearButton().trigger('blur');
+    expect(clearButton().text()).not.toContain('Confirm');
+    // After disarming, a click arms again instead of clearing.
+    await clearButton().trigger('click');
+    expect(wrapper.emitted('clear')).toBeUndefined();
+    expect(clearButton().text()).toContain('Confirm clear?');
+    wrapper.unmount();
   });
 });
 
@@ -150,9 +201,46 @@ describe('Modal', () => {
     wrapper.unmount();
   });
 
+  it('grabs focus when mounted already open (Esc must be reachable)', async () => {
+    // SettingsModal mounts Modal with open: true - the dialog must focus
+    // itself on mount, otherwise keyboard focus stays on the trigger behind
+    // the overlay and Escape never dismisses the dialog.
+    const wrapper = mount(Modal, { props: { open: true, title: 'Settings' }, attachTo: document.body });
+    await nextTick();
+    await nextTick();
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.activeElement).toBe(document.querySelector('[role="dialog"]'));
+    wrapper.unmount();
+    await nextTick();
+  });
+
   it('renders nothing when closed', () => {
     const wrapper = mount(Modal, { props: { open: false, title: 'Test' }, attachTo: document.body });
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+    wrapper.unmount();
+  });
+
+  it('traps keyboard focus within the dialog (Tab/Shift+Tab wrap)', async () => {
+    const wrapper = mount(Modal, {
+      props: { open: true, title: 'Trap' },
+      attachTo: document.body,
+      slots: {
+        default:
+          '<button type="button" id="trap-first">First</button><button type="button" id="trap-last">Last</button>',
+      },
+    });
+    const last = document.getElementById('trap-last')!;
+    // DOM order inside the dialog: header close button, then slot content.
+    const close = document.querySelector('[aria-label="Close dialog"]')!;
+
+    // Tab from the last focusable element wraps to the first (close button).
+    last.focus();
+    last.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(close);
+
+    // Shift+Tab from the first focusable element wraps back to the last.
+    close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(last);
     wrapper.unmount();
   });
 });

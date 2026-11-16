@@ -117,6 +117,28 @@ test.describe('workspace', () => {
     );
   });
 
+  test('the popup settings shortcut (?settings=1) opens the settings dialog', async () => {
+    const host = await extensionHost();
+    test.skip(
+      host === null,
+      'No extension service worker registered in headless Chromium.',
+    );
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${host}/workspace.html?settings=1`);
+
+    // The Settings modal opens immediately on load - the popup's "Settings"
+    // button relies on this query parameter.
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('Settings');
+    await expect(page.locator('#setting-theme')).toBeVisible();
+
+    // Escape dismisses it and leaves a normal workspace behind.
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByTestId('workspace-root')).toBeVisible();
+  });
+
   test('lossless format preserves a 19-digit number exactly', async () => {
     const host = await extensionHost();
     test.skip(
